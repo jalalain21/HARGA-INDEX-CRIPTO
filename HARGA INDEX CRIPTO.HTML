@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crypto Dashboard - Multi Coin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #121212;
+      color: #f0f0f0;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background-color: #1e1e1e;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #ffd700;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      padding: 20px;
+    }
+    .card {
+      background: #1f1f1f;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+    .card h2 {
+      margin: 0 0 10px 0;
+      color: #00bfff;
+    }
+    .price {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    .stats {
+      font-size: 14px;
+      color: #aaa;
+      margin-bottom: 5px;
+    }
+    .bullish { color: #4caf50; font-weight: bold; }
+    .bearish { color: #f44336; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header>Crypto Dashboard - Multi Coin</header>
+  <div class="container" id="dashboard"></div>
+
+  <script>
+    const coins = [
+      {id: "bitcoin", symbol: "BTC"},
+      {id: "ethereum", symbol: "ETH"},
+      {id: "solana", symbol: "SOL"},
+      {id: "jupiter", symbol: "JUP"},
+      {id: "penguin", symbol: "PENGU"},
+      {id: "sui", symbol: "SUI"},
+      {id: "hyperliquid", symbol: "HYPE"},
+      {id: "binancecoin", symbol: "BNB"},
+      {id: "cardano", symbol: "ADA"},
+      {id: "ripple", symbol: "XRP"},
+      {id: "polkadot", symbol: "DOT"},
+      {id: "avalanche-2", symbol: "AVAX"}
+    ];
+
+    // Create card elements dynamically
+    const container = document.getElementById('dashboard');
+    coins.forEach(coin => {
+      container.innerHTML += `
+        <div class="card">
+          <h2>${coin.symbol}</h2>
+          <div class="price">Harga: <span id="${coin.symbol}-price">Loading...</span> IDR</div>
+          <div class="stats">Buy/Sell: <span id="${coin.symbol}-buysell">Loading...</span></div>
+          <div class="stats">Inflow/Outflow: <span id="${coin.symbol}-flow">Loading...</span></div>
+          <div class="stats">Rekomendasi: <span id="${coin.symbol}-signal"></span></div>
+        </div>
+      `;
+    });
+
+    async function fetchPrices() {
+      try {
+        const ids = coins.map(c => c.id).join(',');
+        const response = await fetch(`https://corsproxy.io/?https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=idr`);
+        const data = await response.json();
+
+        coins.forEach(coin => {
+          if (data[coin.id]) {
+            document.getElementById(`${coin.symbol}-price`).textContent = data[coin.id].idr.toLocaleString('id-ID');
+          } else {
+            document.getElementById(`${coin.symbol}-price`).textContent = "N/A";
+          }
+        });
+      } catch (error) {
+        coins.forEach(coin => {
+          document.getElementById(`${coin.symbol}-price`).textContent = "Error";
+        });
+      }
+    }
+
+    function simulateIndicators(symbol) {
+      let buy = Math.floor(Math.random() * 100);
+      let sell = 100 - buy;
+      let inflow = (Math.random() * 10 - 5).toFixed(2);
+
+      document.getElementById(symbol + '-buysell').textContent = `${buy}% / ${sell}%`;
+      document.getElementById(symbol + '-flow').textContent = `${inflow}M`;
+
+      let signalElem = document.getElementById(symbol + '-signal');
+      if (buy > sell && inflow > 0) {
+        signalElem.textContent = "Bullish - Cicil";
+        signalElem.className = "bullish";
+      } else if (sell > buy && inflow < 0) {
+        signalElem.textContent = "Bearish - Waspada";
+        signalElem.className = "bearish";
+      } else {
+        signalElem.textContent = "Netral - Tunggu";
+        signalElem.className = "";
+      }
+    }
+
+    function updateDashboard() {
+      fetchPrices();
+      coins.forEach(coin => simulateIndicators(coin.symbol));
+    }
+
+    updateDashboard();
+    setInterval(updateDashboard, 30000);
+  </script>
+</body>
+</html>
